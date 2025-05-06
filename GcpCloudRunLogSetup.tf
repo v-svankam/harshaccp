@@ -16,7 +16,7 @@ variable "project-id" {
 
 variable "topic-name" {
   type        = string
-  default     = "sentinelcloudrun-topic"
+  default     = "sentinelGcpCloudRun-topic"
   description = "Name of existing topic"
 }
 
@@ -35,41 +35,39 @@ resource "google_project_service" "enable-logging-api" {
   project = data.google_project.project.project_id
 }
 
-resource "google_pubsub_topic" "sentinelcloudrun-topic" {
-  count   = "${var.topic-name != "sentinelcloudrun-topic" ? 0 : 1}"
+resource "google_pubsub_topic" "sentinelGcpCloudRun-topic" {
+  count   = "${var.topic-name != "sentinelGcpCloudRun-topic" ? 0 : 1}"
   name    = var.topic-name
   project = data.google_project.project.project_id
 }
 
 resource "google_pubsub_subscription" "sentinel-subscription" {
   project = data.google_project.project.project_id
-  name    = "sentinel-subscription-CLOUDRUNlogs"
+  name    = "sentinel-subscription-GcpCloudRunlogs"
   topic   = var.topic-name
-  depends_on = [google_pubsub_topic.sentinelcloudrun-topic]
+  depends_on = [google_pubsub_topic.sentinelGcpCloudRun-topic]
 }
 
 resource "google_logging_project_sink" "sentinel-sink" {
   project    = data.google_project.project.project_id
   count      = var.organization-id == "" ? 1 : 0
-  name       = "CLOUDRUN-logs-sentinel-sink"
+  name       = "GcpCloudRun-logs-sentinel-sink"
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
-  depends_on = [google_pubsub_topic.sentinelcloudrun-topic]
+  depends_on = [google_pubsub_topic.sentinelGcpCloudRun-topic]
 
-  filter = "protoPayload.serviceName=run.googleapis.com "
+  filter = "protoPayload.serviceName=run.googleapis.com"
   unique_writer_identity = true
 }
 
 resource "google_logging_organization_sink" "sentinel-organization-sink" {
   count = var.organization-id == "" ? 0 : 1
-  name   = "CLOUDRUN-logs-organization-sentinel-sink"
+  name   = "GcpCloudRun-logs-organization-sentinel-sink"
   org_id = var.organization-id
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
 
-  filter ="protoPayload.serviceName=run.googleapis.com "
+  filter = "protoPayload.serviceName=run.googleapis.com"
   include_children = true
 }
-
-
 
 resource "google_project_iam_binding" "log-writer" {
   count   = var.organization-id == "" ? 1 : 0
