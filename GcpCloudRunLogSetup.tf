@@ -55,7 +55,7 @@ resource "google_logging_project_sink" "sentinel-sink" {
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
   depends_on = [google_pubsub_topic.sentinelGcpCloudRun-topic]
 
-  filter = "protoPayload.serviceName=run.googleapis.com"
+  filter = "protoPayload.serviceName=run.googleapis.com OR (resource.type=cloud_run_job) OR (resource.type=cloud_run_revision)"
   unique_writer_identity = true
 }
 
@@ -65,7 +65,7 @@ resource "google_logging_organization_sink" "sentinel-organization-sink" {
   org_id = var.organization-id
   destination = "pubsub.googleapis.com/projects/${data.google_project.project.project_id}/topics/${var.topic-name}"
 
-  filter = "protoPayload.serviceName=run.googleapis.com"
+  filter = "protoPayload.serviceName=run.googleapis.com OR (resource.type=cloud_run_job) OR (resource.type=cloud_run_revision)"
   include_children = true
 }
 
